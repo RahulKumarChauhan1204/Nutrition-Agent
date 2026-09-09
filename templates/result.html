@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your Nutrition Plan — NutriAI</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+        integrity="sha512-Avb2QiuDEEvB4bZJYdft2mNjVShBftLdPG8FJ0V7irTLQ8Uo0qcPxh4Plh7eecyn6CflLstUkEbRlCg3UF8A=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body class="result-page">
+
+<!-- ===================== HEADER ===================== -->
+<header class="site-header">
+  <div class="container header-inner">
+    <div class="logo">
+      <i class="fa-solid fa-seedling" aria-hidden="true"></i>
+      <span>NutriAI</span>
+    </div>
+    <p class="header-tagline">Your Personal Nutrition Plan</p>
+  </div>
+</header>
+
+<main class="container main-content">
+
+  <!-- ── Action bar ── -->
+  <div class="action-bar no-print">
+    <a href="/" class="btn btn-secondary">
+      <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Create New Plan
+    </a>
+    <button type="button" onclick="window.print()" class="btn btn-outline">
+      <i class="fa-solid fa-print" aria-hidden="true"></i> Print Plan
+    </button>
+  </div>
+
+  <!-- ── Profile banner ── -->
+  <section class="card profile-banner" aria-label="Plan summary for {{ user.name }}">
+    <div class="profile-info">
+      <div class="profile-avatar" aria-hidden="true">
+        <i class="fa-solid fa-user-circle"></i>
+      </div>
+      <div>
+        <h1 class="profile-name">{{ user.name }}'s Nutrition Plan</h1>
+        <p class="profile-meta">
+          {{ user.age }} years &bull; {{ user.gender }} &bull;
+          {{ user.height }} cm &bull; {{ user.weight }} kg &bull;
+          {{ user.fitness_goal }} &bull; {{ user.food_preference }}
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Stats row ── -->
+  <div class="stats-grid">
+
+    <!-- BMI card -->
+    {% if bmi_for_minors %}
+    <div class="stat-card stat-bmi">
+      <div class="stat-icon"><i class="fa-solid fa-child-reaching" aria-hidden="true"></i></div>
+      <div class="stat-label">BMI</div>
+      <div class="stat-value" style="font-size:1rem;">Under 18</div>
+      <div class="stat-sub">See note below</div>
+    </div>
+    {% else %}
+    <div class="stat-card stat-bmi bmi-{{ bmi.category | lower | replace(' ', '-') }}">
+      <div class="stat-icon"><i class="fa-solid fa-weight-scale" aria-hidden="true"></i></div>
+      <div class="stat-label">BMI</div>
+      <div class="stat-value">{{ bmi.bmi }}</div>
+      <div class="stat-sub">{{ bmi.category }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Calories -->
+    <div class="stat-card stat-calories">
+      <div class="stat-icon"><i class="fa-solid fa-fire" aria-hidden="true"></i></div>
+      <div class="stat-label">Daily Calories</div>
+      <div class="stat-value-sm">{{ plan.calorie_guidance | truncate(40, True, '…') }}</div>
+    </div>
+
+    <!-- Protein -->
+    <div class="stat-card stat-protein">
+      <div class="stat-icon"><i class="fa-solid fa-egg" aria-hidden="true"></i></div>
+      <div class="stat-label">Protein</div>
+      <div class="stat-value-sm">{{ plan.macros.protein | truncate(40, True, '…') }}</div>
+    </div>
+
+    <!-- Carbs -->
+    <div class="stat-card stat-carbs">
+      <div class="stat-icon"><i class="fa-solid fa-wheat-awn" aria-hidden="true"></i></div>
+      <div class="stat-label">Carbohydrates</div>
+      <div class="stat-value-sm">{{ plan.macros.carbs | truncate(40, True, '…') }}</div>
+    </div>
+
+    <!-- Fats -->
+    <div class="stat-card stat-fats">
+      <div class="stat-icon"><i class="fa-solid fa-droplet" aria-hidden="true"></i></div>
+      <div class="stat-label">Fats</div>
+      <div class="stat-value-sm">{{ plan.macros.fats | truncate(40, True, '…') }}</div>
+    </div>
+
+  </div><!-- /stats-grid -->
+
+  <!-- ── BMI Note for minors ── -->
+  {% if bmi_for_minors %}
+  <div class="alert alert-warning" role="alert">
+    <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+    <strong>BMI Note:</strong> Adult BMI categories do not apply to children and teenagers.
+    BMI interpretation for those under 18 depends on age- and sex-specific growth charts.
+    Please discuss this with a parent or guardian and a qualified healthcare professional.
+  </div>
+  {% endif %}
+
+  <!-- ── Summary ── -->
+  <section class="card" aria-labelledby="summary-heading">
+    <div class="card-header">
+      <i class="fa-solid fa-clipboard-list" aria-hidden="true"></i>
+      <h2 id="summary-heading">Your Nutrition Summary</h2>
+    </div>
+    <div class="card-body">
+      <p class="summary-text">{{ plan.summary }}</p>
+
+      <div class="detail-grid">
+        <div class="detail-block">
+          <h3><i class="fa-solid fa-fire" aria-hidden="true"></i> Calorie Guidance</h3>
+          <p>{{ plan.calorie_guidance }}</p>
+        </div>
+        <div class="detail-block">
+          <h3><i class="fa-solid fa-droplet" aria-hidden="true"></i> Hydration</h3>
+          <p>{{ plan.hydration }}</p>
+        </div>
+      </div>
+
+      <div class="macro-breakdown">
+        <h3>Macronutrient Guidance</h3>
+        <div class="macro-grid">
+          <div class="macro-card macro-protein">
+            <i class="fa-solid fa-egg" aria-hidden="true"></i>
+            <strong>Protein</strong>
+            <p>{{ plan.macros.protein }}</p>
+          </div>
+          <div class="macro-card macro-carbs">
+            <i class="fa-solid fa-wheat-awn" aria-hidden="true"></i>
+            <strong>Carbohydrates</strong>
+            <p>{{ plan.macros.carbs }}</p>
+          </div>
+          <div class="macro-card macro-fats">
+            <i class="fa-solid fa-droplet" aria-hidden="true"></i>
+            <strong>Fats</strong>
+            <p>{{ plan.macros.fats }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Daily Meal Schedule ── -->
+  {% if plan.meal_plan %}
+  <section class="card" aria-labelledby="daily-meal-heading">
+    <div class="card-header">
+      <i class="fa-solid fa-utensils" aria-hidden="true"></i>
+      <h2 id="daily-meal-heading">Daily Meal Schedule</h2>
+    </div>
+    <div class="card-body">
+      <div class="meal-schedule">
+        {% for meal in plan.meal_plan %}
+        <div class="meal-item">
+          <div class="meal-name">{{ meal.meal }}</div>
+          <ul class="meal-foods">
+            {% for food in meal.foods %}
+            <li>{{ food }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ── 7-Day Meal Plan ── -->
+  {% if plan.seven_day_plan %}
+  <section class="card" aria-labelledby="weekly-plan-heading">
+    <div class="card-header">
+      <i class="fa-solid fa-calendar-week" aria-hidden="true"></i>
+      <h2 id="weekly-plan-heading">7-Day Meal Plan Example</h2>
+    </div>
+    <div class="card-body">
+      <p class="info-text">
+        <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+        This is a sample weekly plan. Feel free to swap meals between days.
+        Portion sizes should be adjusted to your calorie target.
+      </p>
+      <div class="table-wrapper">
+        <table class="meal-table" aria-label="7-day meal plan">
+          <thead>
+            <tr>
+              <th>Day</th>
+              <th>Breakfast</th>
+              <th>Lunch</th>
+              <th>Snack</th>
+              <th>Dinner</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for day in plan.seven_day_plan %}
+            <tr>
+              <td class="day-cell"><strong>{{ day.day }}</strong></td>
+              <td>{{ day.breakfast }}</td>
+              <td>{{ day.lunch }}</td>
+              <td>{{ day.snack }}</td>
+              <td>{{ day.dinner }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ── Foods to Prioritise / Limit ── -->
+  <div class="two-col-grid">
+
+    {% if plan.foods_to_prioritize %}
+    <section class="card" aria-labelledby="prioritize-heading">
+      <div class="card-header card-header-green">
+        <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+        <h2 id="prioritize-heading">Foods to Prioritise</h2>
+      </div>
+      <div class="card-body">
+        <ul class="food-list food-list-green">
+          {% for food in plan.foods_to_prioritize %}
+          <li><i class="fa-solid fa-plus" aria-hidden="true"></i> {{ food }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </section>
+    {% endif %}
+
+    {% if plan.foods_to_limit %}
+    <section class="card" aria-labelledby="limit-heading">
+      <div class="card-header card-header-amber">
+        <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+        <h2 id="limit-heading">Foods to Limit</h2>
+      </div>
+      <div class="card-body">
+        <ul class="food-list food-list-amber">
+          {% for food in plan.foods_to_limit %}
+          <li><i class="fa-solid fa-minus" aria-hidden="true"></i> {{ food }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </section>
+    {% endif %}
+
+  </div><!-- /two-col-grid -->
+
+  <!-- ── Practical Tips ── -->
+  {% if plan.tips %}
+  <section class="card" aria-labelledby="tips-heading">
+    <div class="card-header">
+      <i class="fa-solid fa-lightbulb" aria-hidden="true"></i>
+      <h2 id="tips-heading">Nutrition Tips</h2>
+    </div>
+    <div class="card-body">
+      <ol class="tips-list">
+        {% for tip in plan.tips %}
+        <li>{{ tip }}</li>
+        {% endfor %}
+      </ol>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ── Disclaimer ── -->
+  <section class="card disclaimer-card" aria-labelledby="disclaimer-heading">
+    <div class="card-header card-header-blue">
+      <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+      <h2 id="disclaimer-heading">Important Disclaimer</h2>
+    </div>
+    <div class="card-body">
+      <p>{{ plan.disclaimer }}</p>
+      <p class="disclaimer-extra">
+        This plan is generated for general education purposes only. It is <strong>not a substitute
+        for professional medical or dietary advice, diagnosis, or treatment</strong>.
+        Always seek the advice of a qualified healthcare professional before making significant
+        changes to your diet, especially if you have any existing medical conditions.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── Bottom action bar ── -->
+  <div class="action-bar no-print">
+    <a href="/" class="btn btn-primary">
+      <i class="fa-solid fa-plus" aria-hidden="true"></i> Create New Plan
+    </a>
+    <button type="button" onclick="window.print()" class="btn btn-outline">
+      <i class="fa-solid fa-print" aria-hidden="true"></i> Print Plan
+    </button>
+  </div>
+
+</main>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <p class="disclaimer-footer">
+      <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+      <strong>Disclaimer:</strong> NutriAI provides general nutrition education only and is
+      not a substitute for professional medical or dietary advice.
+    </p>
+    <p class="footer-copy">&copy; 2025 NutriAI</p>
+  </div>
+</footer>
+
+</body>
+</html>

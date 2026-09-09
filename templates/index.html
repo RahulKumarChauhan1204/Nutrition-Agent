@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NutriAI — Personal Nutrition Assistant</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+        integrity="sha512-Avb2QiuDEEvB4bZJYdft2mNjVShBftLdPG8FJ0V7irTLQ8Uo0qcPxh4Plh7eecyn6CflLstUkEbRlCg3UF8A=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <meta name="description" content="NutriAI – AI-powered personal nutrition planning tool." />
+</head>
+<body>
+
+<!-- ===================== HEADER ===================== -->
+<header class="site-header">
+  <div class="container header-inner">
+    <div class="logo">
+      <i class="fa-solid fa-seedling" aria-hidden="true"></i>
+      <span>NutriAI</span>
+    </div>
+    <p class="header-tagline">Your Personal Nutrition Assistant</p>
+  </div>
+</header>
+
+<!-- ===================== HERO ===================== -->
+<section class="hero">
+  <div class="container hero-inner">
+    <h1 class="hero-title">Build a Nutrition Plan Based on Your Goals</h1>
+    <p class="hero-sub">Answer a few questions and our AI will create a personalised nutrition
+      plan tailored to your lifestyle, preferences, and goals.</p>
+    <div class="hero-badges">
+      <span class="badge"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Privacy-first</span>
+      <span class="badge"><i class="fa-solid fa-bolt" aria-hidden="true"></i> AI-powered</span>
+      <span class="badge"><i class="fa-solid fa-leaf" aria-hidden="true"></i> Personalised</span>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== MAIN CONTENT ===================== -->
+<main class="container main-content">
+
+  <!-- BMI Calculator Card -->
+  <section class="card bmi-card" aria-labelledby="bmi-heading">
+    <div class="card-header">
+      <i class="fa-solid fa-calculator" aria-hidden="true"></i>
+      <h2 id="bmi-heading">Quick BMI Calculator</h2>
+    </div>
+    <div class="card-body">
+      <p class="info-text">
+        <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+        BMI is a general screening measure and <strong>is not a medical diagnosis</strong>.
+        It does not account for muscle mass, bone density, or other individual factors.
+      </p>
+      <div class="bmi-inputs">
+        <div class="form-group">
+          <label for="bmi-height">Height (cm)</label>
+          <input type="number" id="bmi-height" placeholder="e.g. 170" min="50" max="300"
+                 aria-label="Height in centimetres for BMI calculation" />
+        </div>
+        <div class="form-group">
+          <label for="bmi-weight">Weight (kg)</label>
+          <input type="number" id="bmi-weight" placeholder="e.g. 70" min="10" max="500"
+                 aria-label="Weight in kilograms for BMI calculation" />
+        </div>
+        <button type="button" id="calc-bmi-btn" class="btn btn-secondary">
+          <i class="fa-solid fa-calculator" aria-hidden="true"></i> Calculate BMI
+        </button>
+      </div>
+      <div id="bmi-result" class="bmi-result hidden" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- Nutrition Plan Form -->
+  <form id="nutrition-form" method="POST" action="/generate-plan" novalidate>
+
+    <!-- Personal Information -->
+    <section class="card" aria-labelledby="personal-heading">
+      <div class="card-header">
+        <i class="fa-solid fa-user" aria-hidden="true"></i>
+        <h2 id="personal-heading">Personal Information</h2>
+      </div>
+      <div class="card-body">
+        <div class="form-grid">
+
+          <div class="form-group">
+            <label for="name">Full Name <span class="required" aria-label="required">*</span></label>
+            <input type="text" id="name" name="name" placeholder="Your name"
+                   autocomplete="name" maxlength="100" />
+            <span class="error-msg" id="name-error" role="alert"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="age">Age <span class="required" aria-label="required">*</span></label>
+            <input type="number" id="age" name="age" placeholder="e.g. 28" min="1" max="120" />
+            <span class="error-msg" id="age-error" role="alert"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="gender">Gender <span class="required" aria-label="required">*</span></label>
+            <select id="gender" name="gender">
+              <option value="">— Select —</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Non-binary">Non-binary</option>
+              <option value="Prefer not to say">Prefer not to say</option>
+            </select>
+            <span class="error-msg" id="gender-error" role="alert"></span>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Body Metrics -->
+    <section class="card" aria-labelledby="metrics-heading">
+      <div class="card-header">
+        <i class="fa-solid fa-ruler-combined" aria-hidden="true"></i>
+        <h2 id="metrics-heading">Body Metrics</h2>
+      </div>
+      <div class="card-body">
+        <div class="form-grid">
+
+          <div class="form-group">
+            <label for="height">Height (cm) <span class="required" aria-label="required">*</span></label>
+            <input type="number" id="height" name="height" placeholder="e.g. 170"
+                   min="50" max="300" step="0.1" />
+            <span class="error-msg" id="height-error" role="alert"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="weight">Weight (kg) <span class="required" aria-label="required">*</span></label>
+            <input type="number" id="weight" name="weight" placeholder="e.g. 70"
+                   min="10" max="500" step="0.1" />
+            <span class="error-msg" id="weight-error" role="alert"></span>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Activity Level -->
+    <section class="card" aria-labelledby="activity-heading">
+      <div class="card-header">
+        <i class="fa-solid fa-person-running" aria-hidden="true"></i>
+        <h2 id="activity-heading">Activity Level</h2>
+      </div>
+      <div class="card-body">
+        <div class="option-cards" id="activity-options" role="radiogroup" aria-labelledby="activity-heading">
+
+          <label class="option-card">
+            <input type="radio" name="activity_level" value="Sedentary" />
+            <div class="option-content">
+              <i class="fa-solid fa-couch" aria-hidden="true"></i>
+              <strong>Sedentary</strong>
+              <small>Little or no exercise</small>
+            </div>
+          </label>
+
+          <label class="option-card">
+            <input type="radio" name="activity_level" value="Lightly Active" />
+            <div class="option-content">
+              <i class="fa-solid fa-person-walking" aria-hidden="true"></i>
+              <strong>Lightly Active</strong>
+              <small>Light exercise 1–3 days/week</small>
+            </div>
+          </label>
+
+          <label class="option-card">
+            <input type="radio" name="activity_level" value="Moderately Active" />
+            <div class="option-content">
+              <i class="fa-solid fa-bicycle" aria-hidden="true"></i>
+              <strong>Moderately Active</strong>
+              <small>Moderate exercise 3–5 days/week</small>
+            </div>
+          </label>
+
+          <label class="option-card">
+            <input type="radio" name="activity_level" value="Very Active" />
+            <div class="option-content">
+              <i class="fa-solid fa-dumbbell" aria-hidden="true"></i>
+              <strong>Very Active</strong>
+              <small>Hard exercise 6–7 days/week</small>
+            </div>
+          </label>
+
+          <label class="option-card">
+            <input type="radio" name="activity_level" value="Extremely Active" />
+            <div class="option-content">
+              <i class="fa-solid fa-fire-flame-curved" aria-hidden="true"></i>
+              <strong>Extremely Active</strong>
+              <small>Very hard exercise or physical job</small>
+            </div>
+          </label>
+
+        </div>
+        <span class="error-msg" id="activity_level-error" role="alert"></span>
+      </div>
+    </section>
+
+    <!-- Fitness Goal -->
+    <section class="card" aria-labelledby="goal-heading">
+      <div class="card-header">
+        <i class="fa-solid fa-bullseye" aria-hidden="true"></i>
+        <h2 id="goal-heading">Fitness Goal</h2>
+      </div>
+      <div class="card-body">
+        <div class="option-cards" id="goal-options" role="radiogroup" aria-labelledby="goal-heading">
+
+          <label class="option-card">
+            <input type="radio" name="fitness_goal" value="Weight Loss" />
+            <div class="option-content">
+              <i class="fa-solid fa-arrow-trend-down" aria-hidden="true"></i>
+              <strong>Weight Loss</strong>
+              <small>Reduce body weight</small>
+            </div>
+          </label>
+
+          <label class="option-card">
+            <input type="radio" name="fitness_goal" value="Weight Maintenance" />
+            <div class="option-content">
+              <i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>
+              <strong>Weight Maintenance</strong>
+              <small>Stay at current weight</small>
+            </div>
+          </label>
+
+          <label class="option-card">
+            <input type="radio" name="fitness_goal" value="Muscle Gain" />
+            <div class="option-content">
+              <i class="fa-solid fa-dumbbell" aria-hidden="true"></i>
+              <strong>Muscle Gain</strong>
+              <small>Build lean muscle mass</small>
+            </div>
+          </label>
+
+          <label class="option-card">
+            <input type="radio" name="fitness_goal" value="General Healthy Eating" />
+            <div class="option-content">
+              <i class="fa-solid fa-heart" aria-hidden="true"></i>
+              <strong>Healthy Eating</strong>
+              <small>Balanced, nutritious diet</small>
+            </div>
+          </label>
+
+        </div>
+        <span class="error-msg" id="fitness_goal-error" role="alert"></span>
+      </div>
+    </section>
+
+    <!-- Food Preferences -->
+    <section class="card" aria-labelledby="food-pref-heading">
+      <div class="card-header">
+        <i class="fa-solid fa-utensils" aria-hidden="true"></i>
+        <h2 id="food-pref-heading">Food Preference</h2>
+      </div>
+      <div class="card-body">
+        <div class="option-cards" id="food-options" role="radiogroup" aria-labelledby="food-pref-heading">
+
+          <label class="option-card">
+            <input type="radio" name="food_preference" value="Vegetarian" />
+            <div class="option-content">
+              <i class="fa-solid fa-leaf" aria-hidden="true"></i>
+              <strong>Vegetarian</strong>
+              <small>No meat or seafood</small>
+            </div>
+          </label>
+
+          <label class="option-card">
+            <input type="radio" name="food_preference" value="Non-Vegetarian" />
+            <div class="option-content">
+              <i class="fa-solid fa-drumstick-bite" aria-hidden="true"></i>
+              <strong>Non-Vegetarian</strong>
+              <small>Includes meat &amp; seafood</small>
+            </div>
+          </label>
+
+          <label class="option-card">
+            <input type="radio" name="food_preference" value="Vegan" />
+            <div class="option-content">
+              <i class="fa-solid fa-seedling" aria-hidden="true"></i>
+              <strong>Vegan</strong>
+              <small>No animal products</small>
+            </div>
+          </label>
+
+          <label class="option-card">
+            <input type="radio" name="food_preference" value="Eggetarian" />
+            <div class="option-content">
+              <i class="fa-solid fa-egg" aria-hidden="true"></i>
+              <strong>Eggetarian</strong>
+              <small>Vegetarian + eggs</small>
+            </div>
+          </label>
+
+        </div>
+        <span class="error-msg" id="food_preference-error" role="alert"></span>
+      </div>
+    </section>
+
+    <!-- Additional Preferences -->
+    <section class="card" aria-labelledby="additional-heading">
+      <div class="card-header">
+        <i class="fa-solid fa-sliders" aria-hidden="true"></i>
+        <h2 id="additional-heading">Additional Preferences <span class="optional-label">(Optional)</span></h2>
+      </div>
+      <div class="card-body">
+        <div class="form-grid">
+
+          <div class="form-group">
+            <label for="allergies">Allergies / Intolerances</label>
+            <input type="text" id="allergies" name="allergies"
+                   placeholder="e.g. peanuts, lactose, gluten" maxlength="300" />
+          </div>
+
+          <div class="form-group">
+            <label for="disliked_foods">Foods You Dislike</label>
+            <input type="text" id="disliked_foods" name="disliked_foods"
+                   placeholder="e.g. broccoli, fish, mushrooms" maxlength="300" />
+          </div>
+
+          <div class="form-group">
+            <label for="meals_per_day">Meals per Day</label>
+            <select id="meals_per_day" name="meals_per_day">
+              <option value="">— Select —</option>
+              <option value="2">2 meals</option>
+              <option value="3">3 meals</option>
+              <option value="4">4 meals</option>
+              <option value="5">5 meals</option>
+              <option value="6">6 meals</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="cuisine_preference">Cuisine Preference</label>
+            <input type="text" id="cuisine_preference" name="cuisine_preference"
+                   placeholder="e.g. Indian, Mediterranean, South Indian" maxlength="200" />
+          </div>
+
+          <div class="form-group">
+            <label for="budget_preference">Budget Preference</label>
+            <select id="budget_preference" name="budget_preference">
+              <option value="">— Select —</option>
+              <option value="Low budget">Low budget</option>
+              <option value="Moderate budget">Moderate budget</option>
+              <option value="No budget constraint">No budget constraint</option>
+            </select>
+          </div>
+
+          <div class="form-group full-width">
+            <label for="additional_notes">Additional Notes</label>
+            <textarea id="additional_notes" name="additional_notes" rows="3"
+                      placeholder="Any medical conditions, medications, or other relevant information…"
+                      maxlength="500"></textarea>
+            <small class="field-hint">If you have a medical condition or take medication,
+              please consult a healthcare professional — the AI cannot provide medical advice.</small>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Submit -->
+    <div class="submit-section">
+      <button type="submit" id="submit-btn" class="btn btn-primary btn-large">
+        <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+        Generate My Nutrition Plan
+      </button>
+    </div>
+
+  </form><!-- /nutrition-form -->
+
+</main>
+
+<!-- Loading overlay -->
+<div id="loading-overlay" class="loading-overlay hidden" role="status" aria-live="assertive">
+  <div class="loading-box">
+    <div class="spinner" aria-hidden="true"></div>
+    <h3>Creating your personalised nutrition plan…</h3>
+    <p>This usually takes 10–20 seconds.</p>
+  </div>
+</div>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <p class="disclaimer-footer">
+      <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+      <strong>Disclaimer:</strong> NutriAI provides general nutrition education only.
+      It is <strong>not a substitute</strong> for professional medical or dietary advice.
+      Always consult a qualified healthcare professional before making significant dietary changes.
+    </p>
+    <p class="footer-copy">&copy; 2025 NutriAI</p>
+  </div>
+</footer>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
