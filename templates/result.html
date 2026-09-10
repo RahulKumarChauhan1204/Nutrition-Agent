@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Your Nutrition Plan — NutriAI</title>
+  <title>Your Health &amp; Nutrition Plan — HealthCare</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
         integrity="sha512-Avb2QiuDEEvB4bZJYdft2mNjVShBftLdPG8FJ0V7irTLQ8Uo0qcPxh4Plh7eecyn6CflLstUkEbRlCg3UF8A=="
@@ -15,10 +15,10 @@
 <header class="site-header">
   <div class="container header-inner">
     <div class="logo">
-      <i class="fa-solid fa-seedling" aria-hidden="true"></i>
-      <span>NutriAI</span>
+      <i class="fa-solid fa-heart-pulse" aria-hidden="true"></i>
+      <span>HealthCare</span>
     </div>
-    <p class="header-tagline">Your Personal Nutrition Plan</p>
+    <p class="header-tagline">Your personalised plan is ready</p>
   </div>
 </header>
 
@@ -27,39 +27,78 @@
   <!-- ── Action bar ── -->
   <div class="action-bar no-print">
     <a href="/" class="btn btn-secondary">
-      <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Create New Plan
+      <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> New Plan
     </a>
     <button type="button" onclick="window.print()" class="btn btn-outline">
-      <i class="fa-solid fa-print" aria-hidden="true"></i> Print Plan
+      <i class="fa-solid fa-print" aria-hidden="true"></i> Print / Save PDF
     </button>
   </div>
 
+  <!-- ── Health Risk Alert (if any) ── -->
+  {% if health_risk.see_doctor %}
+  <div class="alert alert-danger" role="alert">
+    <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+    <div>
+      <strong>Medical Attention Recommended</strong>
+      <p style="margin:.3rem 0 .5rem;">{{ health_risk.recommendation }}</p>
+      {% if health_risk.flags %}
+      <ul class="alert-flags">
+        {% for flag in health_risk.flags %}
+        <li><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> {{ flag }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+  </div>
+  {% elif health_risk.flags %}
+  <div class="alert alert-warning" role="alert">
+    <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+    <div>
+      <strong>Health Notes</strong>
+      <ul class="alert-flags" style="margin-top:.35rem;">
+        {% for flag in health_risk.flags %}
+        <li>{{ flag }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  {% endif %}
+
   <!-- ── Profile banner ── -->
-  <section class="card profile-banner" aria-label="Plan summary for {{ user.name }}">
-    <div class="profile-info">
-      <div class="profile-avatar" aria-hidden="true">
-        <i class="fa-solid fa-user-circle"></i>
-      </div>
-      <div>
-        <h1 class="profile-name">{{ user.name }}'s Nutrition Plan</h1>
-        <p class="profile-meta">
-          {{ user.age }} years &bull; {{ user.gender }} &bull;
-          {{ user.height }} cm &bull; {{ user.weight }} kg &bull;
-          {{ user.fitness_goal }} &bull; {{ user.food_preference }}
-        </p>
+  <section class="card profile-banner" aria-label="Plan for {{ user.name }}">
+    <div class="card-body">
+      <div class="profile-info">
+        <div class="profile-avatar" aria-hidden="true">
+          <i class="fa-solid fa-user-circle"></i>
+        </div>
+        <div class="profile-details">
+          <h1 class="profile-name">{{ user.name }}'s Health &amp; Nutrition Plan</h1>
+          <p class="profile-meta">
+            {{ user.age }} yrs &bull; {{ user.gender }} &bull;
+            {{ user.height }} cm &bull; {{ user.weight }} kg &bull;
+            {{ user.fitness_goal }} &bull; {{ user.food_preference }}
+            {% if user.health_condition and user.health_condition != 'None' %}
+            &bull; <span class="condition-tag"><i class="fa-solid fa-stethoscope" aria-hidden="true"></i> {{ user.health_condition }}</span>
+            {% endif %}
+          </p>
+          <!-- Health risk badge -->
+          <div class="risk-badge risk-{{ health_risk.risk_level | lower }}" aria-label="Health risk level: {{ health_risk.risk_level }}">
+            <i class="fa-solid fa-{% if health_risk.risk_level == 'High' %}circle-exclamation{% elif health_risk.risk_level == 'Medium' %}triangle-exclamation{% else %}circle-check{% endif %}" aria-hidden="true"></i>
+            Health Risk: {{ health_risk.risk_level }}
+          </div>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- ── Stats row ── -->
+  <!-- ── Stats grid ── -->
   <div class="stats-grid">
 
-    <!-- BMI card -->
     {% if bmi_for_minors %}
     <div class="stat-card stat-bmi">
       <div class="stat-icon"><i class="fa-solid fa-child-reaching" aria-hidden="true"></i></div>
       <div class="stat-label">BMI</div>
-      <div class="stat-value" style="font-size:1rem;">Under 18</div>
+      <div class="stat-value" style="font-size:1rem">Under 18</div>
       <div class="stat-sub">See note below</div>
     </div>
     {% else %}
@@ -71,43 +110,41 @@
     </div>
     {% endif %}
 
-    <!-- Calories -->
     <div class="stat-card stat-calories">
       <div class="stat-icon"><i class="fa-solid fa-fire" aria-hidden="true"></i></div>
       <div class="stat-label">Daily Calories</div>
-      <div class="stat-value-sm">{{ plan.calorie_guidance | truncate(40, True, '…') }}</div>
+      <div class="stat-value-sm">{{ plan.calorie_guidance | truncate(42, True, '…') }}</div>
     </div>
 
-    <!-- Protein -->
     <div class="stat-card stat-protein">
       <div class="stat-icon"><i class="fa-solid fa-egg" aria-hidden="true"></i></div>
       <div class="stat-label">Protein</div>
-      <div class="stat-value-sm">{{ plan.macros.protein | truncate(40, True, '…') }}</div>
+      <div class="stat-value-sm">{{ plan.macros.protein | truncate(42, True, '…') }}</div>
     </div>
 
-    <!-- Carbs -->
     <div class="stat-card stat-carbs">
       <div class="stat-icon"><i class="fa-solid fa-wheat-awn" aria-hidden="true"></i></div>
       <div class="stat-label">Carbohydrates</div>
-      <div class="stat-value-sm">{{ plan.macros.carbs | truncate(40, True, '…') }}</div>
+      <div class="stat-value-sm">{{ plan.macros.carbs | truncate(42, True, '…') }}</div>
     </div>
 
-    <!-- Fats -->
     <div class="stat-card stat-fats">
       <div class="stat-icon"><i class="fa-solid fa-droplet" aria-hidden="true"></i></div>
       <div class="stat-label">Fats</div>
-      <div class="stat-value-sm">{{ plan.macros.fats | truncate(40, True, '…') }}</div>
+      <div class="stat-value-sm">{{ plan.macros.fats | truncate(42, True, '…') }}</div>
     </div>
 
-  </div><!-- /stats-grid -->
+  </div>
 
   <!-- ── BMI Note for minors ── -->
   {% if bmi_for_minors %}
   <div class="alert alert-warning" role="alert">
-    <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
-    <strong>BMI Note:</strong> Adult BMI categories do not apply to children and teenagers.
-    BMI interpretation for those under 18 depends on age- and sex-specific growth charts.
-    Please discuss this with a parent or guardian and a qualified healthcare professional.
+    <i class="fa-solid fa-child-reaching" aria-hidden="true"></i>
+    <div>
+      <strong>BMI Note for Users Under 18:</strong> Adult BMI categories do not apply to children
+      and teenagers. BMI interpretation for those under 18 depends on age- and sex-specific growth
+      charts. Please discuss this with a parent/guardian and a qualified healthcare professional.
+    </div>
   </div>
   {% endif %}
 
@@ -115,7 +152,7 @@
   <section class="card" aria-labelledby="summary-heading">
     <div class="card-header">
       <i class="fa-solid fa-clipboard-list" aria-hidden="true"></i>
-      <h2 id="summary-heading">Your Nutrition Summary</h2>
+      <h2 id="summary-heading">Your Health &amp; Nutrition Summary</h2>
     </div>
     <div class="card-body">
       <p class="summary-text">{{ plan.summary }}</p>
@@ -131,8 +168,21 @@
         </div>
       </div>
 
+      <!-- Health Notes (condition-specific) -->
+      {% if plan.health_notes %}
+      <div class="health-notes-block">
+        <h3><i class="fa-solid fa-stethoscope" aria-hidden="true"></i> Condition-Specific Dietary Notes</h3>
+        <p>{{ plan.health_notes }}</p>
+        <p class="health-notes-disclaimer">
+          <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+          The above is general educational information only — not medical advice.
+          Consult a registered dietitian for guidance specific to your condition.
+        </p>
+      </div>
+      {% endif %}
+
       <div class="macro-breakdown">
-        <h3>Macronutrient Guidance</h3>
+        <h3>Macronutrient Guidance <span class="optional-label">(approximate)</span></h3>
         <div class="macro-grid">
           <div class="macro-card macro-protein">
             <i class="fa-solid fa-egg" aria-hidden="true"></i>
@@ -254,14 +304,14 @@
     </section>
     {% endif %}
 
-  </div><!-- /two-col-grid -->
+  </div>
 
   <!-- ── Practical Tips ── -->
   {% if plan.tips %}
   <section class="card" aria-labelledby="tips-heading">
     <div class="card-header">
       <i class="fa-solid fa-lightbulb" aria-hidden="true"></i>
-      <h2 id="tips-heading">Nutrition Tips</h2>
+      <h2 id="tips-heading">Health &amp; Nutrition Tips</h2>
     </div>
     <div class="card-body">
       <ol class="tips-list">
@@ -277,15 +327,15 @@
   <section class="card disclaimer-card" aria-labelledby="disclaimer-heading">
     <div class="card-header card-header-blue">
       <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
-      <h2 id="disclaimer-heading">Important Disclaimer</h2>
+      <h2 id="disclaimer-heading">Important Medical Disclaimer</h2>
     </div>
     <div class="card-body">
       <p>{{ plan.disclaimer }}</p>
       <p class="disclaimer-extra">
-        This plan is generated for general education purposes only. It is <strong>not a substitute
-        for professional medical or dietary advice, diagnosis, or treatment</strong>.
-        Always seek the advice of a qualified healthcare professional before making significant
-        changes to your diet, especially if you have any existing medical conditions.
+        This plan is generated for general educational purposes only and is
+        <strong>not a substitute for professional medical or dietary advice, diagnosis, or treatment</strong>.
+        Always seek the guidance of a qualified healthcare professional before making significant
+        dietary changes, especially if you have existing medical conditions or take medications.
       </p>
     </div>
   </section>
@@ -296,7 +346,7 @@
       <i class="fa-solid fa-plus" aria-hidden="true"></i> Create New Plan
     </a>
     <button type="button" onclick="window.print()" class="btn btn-outline">
-      <i class="fa-solid fa-print" aria-hidden="true"></i> Print Plan
+      <i class="fa-solid fa-print" aria-hidden="true"></i> Print / Save PDF
     </button>
   </div>
 
@@ -307,10 +357,10 @@
   <div class="container footer-inner">
     <p class="disclaimer-footer">
       <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
-      <strong>Disclaimer:</strong> NutriAI provides general nutrition education only and is
-      not a substitute for professional medical or dietary advice.
+      <strong>Medical Disclaimer:</strong> HealthCare provides general nutrition and health education only.
+      It is not a substitute for professional medical advice, diagnosis, or treatment.
     </p>
-    <p class="footer-copy">&copy; 2025 NutriAI</p>
+    <p class="footer-copy">&copy; 2025 HealthCare &mdash; For educational purposes only</p>
   </div>
 </footer>
 

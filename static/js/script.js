@@ -1,29 +1,126 @@
 /**
- * NutriAI — Client-Side Script
+ * HealthCare — Client-Side Script
  * Handles:
- *  - BMI calculator (instant, no API call)
+ *  - Health Check section: live risk preview + hidden-field sync
+ *  - BMI calculator (instant, browser-only)
  *  - Form validation (required fields, numeric ranges)
  *  - Loading overlay during form submission
  *  - Option-card keyboard accessibility
+ *  - Auto-sync BMI fields from the main form inputs
  */
+
+/* =====================================================================
+   HEALTH CHECK — live risk preview & sync to hidden form fields
+   ===================================================================== */
+
+(function initHealthCheck() {
+  var condSelect   = document.getElementById("health-condition-display");
+  var symptomsInput = document.getElementById("symptoms-display");
+  var previewDiv   = document.getElementById("health-check-preview");
+  var hiddenCond   = document.getElementById("health_condition");
+  var hiddenSymp   = document.getElementById("symptoms");
+
+  if (!condSelect) return;
+
+  var HIGH_RISK   = ["Diabetes (Type 1)", "Diabetes (Type 2)", "Heart disease",
+                     "Kidney disease", "Liver disease"];
+  var MEDIUM_RISK = ["Hypertension", "High Cholesterol", "PCOS/PCOD",
+                     "Thyroid disorder", "Anaemia"];
+  var RED_FLAG_SYMPTOMS = [
+    "chest pain", "chest tightness", "shortness of breath", "severe headache",
+    "fainting", "numbness", "vision loss", "blood in urine",
+    "blood in stool", "sudden weight loss"
+  ];
+
+  function getRisk() {
+    var cond     = condSelect.value;
+    var symptoms = symptomsInput.value.split(",").map(function(s) { return s.trim().toLowerCase(); });
+    var level    = "Low";
+    var msg      = "";
+    var seeDoc   = false;
+
+    if (HIGH_RISK.indexOf(cond) !== -1) {
+      level  = "High";
+      seeDoc = true;
+      msg    = "<strong>" + cond + "</strong> requires professional dietary supervision. ";
+    } else if (MEDIUM_RISK.indexOf(cond) !== -1) {
+      level  = "Medium";
+      seeDoc = true;
+      msg    = "<strong>" + cond + "</strong> — a registered dietitian can provide tailored guidance. ";
+    }
+
+    symptoms.forEach(function(s) {
+      if (s && RED_FLAG_SYMPTOMS.indexOf(s) !== -1) {
+        level  = "High";
+        seeDoc = true;
+        msg   += "Symptom <em>'" + escapeHtml(s) + "'</em> may need urgent medical attention. ";
+      }
+    });
+
+    return { level: level, msg: msg, seeDoc: seeDoc };
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  function updatePreview() {
+    var cond = condSelect.value;
+    var symp = symptomsInput.value.trim();
+
+    // Sync hidden fields
+    if (hiddenCond) hiddenCond.value = cond;
+    if (hiddenSymp) hiddenSymp.value = symp;
+
+    // Show preview only if something is entered
+    if (cond === "None" && !symp) {
+      previewDiv.classList.add("hidden");
+      previewDiv.className = "health-check-preview hidden";
+      return;
+    }
+
+    var risk = getRisk();
+    var icon = risk.level === "High"
+      ? '<i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>'
+      : risk.level === "Medium"
+      ? '<i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>'
+      : '<i class="fa-solid fa-circle-check" aria-hidden="true"></i>';
+
+    var notice = risk.seeDoc
+      ? " <strong>Please consult a healthcare professional before making dietary changes.</strong>"
+      : " Your entries look routine — still consult a professional for personalised advice.";
+
+    previewDiv.className = "health-check-preview risk-" + risk.level.toLowerCase();
+    previewDiv.innerHTML = icon + " <strong>Estimated Risk Level: " + risk.level + ".</strong> "
+      + (risk.msg || "") + notice;
+    previewDiv.classList.remove("hidden");
+  }
+
+  condSelect.addEventListener("change", updatePreview);
+  symptomsInput.addEventListener("input", updatePreview);
+
+  // Initialise on load
+  updatePreview();
+})();
+
 
 /* =====================================================================
    BMI CALCULATOR
    ===================================================================== */
 
 (function initBmiCalculator() {
-  const heightInput  = document.getElementById("bmi-height");
-  const weightInput  = document.getElementById("bmi-weight");
-  const calcBtn      = document.getElementById("calc-bmi-btn");
-  const resultDiv    = document.getElementById("bmi-result");
+  var heightInput = document.getElementById("bmi-height");
+  var weightInput = document.getElementById("bmi-weight");
+  var calcBtn     = document.getElementById("calc-bmi-btn");
+  var resultDiv   = document.getElementById("bmi-result");
 
-  if (!calcBtn) return; // Not on a page with the calculator
+  if (!calcBtn) return;
 
   function computeBmi() {
-    const heightCm = parseFloat(heightInput.value);
-    const weightKg = parseFloat(weightInput.value);
-
     clearBmiError();
+
+    var heightCm = parseFloat(heightInput.value);
+    var weightKg = parseFloat(weightInput.value);
 
     if (!heightCm || !weightKg) {
       showBmiError("Please enter both height and weight.");
@@ -38,35 +135,33 @@
       return;
     }
 
-    const heightM = heightCm / 100;
-    const bmi     = weightKg / (heightM * heightM);
-    const bmiRound = Math.round(bmi * 10) / 10;
+    var heightM  = heightCm / 100;
+    var bmi      = weightKg / (heightM * heightM);
+    var bmiRound = Math.round(bmi * 10) / 10;
+    var cat      = getBmiCategory(bmiRound);
 
-    const { category, cssClass } = getBmiCategory(bmiRound);
-
-    resultDiv.className = "bmi-result " + cssClass;
-    resultDiv.innerHTML = `
-      <div class="bmi-value">${bmiRound}</div>
-      <div class="bmi-category">${category}</div>
-      <div class="bmi-note">
-        BMI is a general screening measure and is <strong>not a medical diagnosis</strong>.
-        It does not account for muscle mass, bone density, age, or sex differences.
-        Always consult a healthcare professional for a full health assessment.
-      </div>
-    `;
+    resultDiv.className = "bmi-result " + cat.cssClass;
+    resultDiv.innerHTML =
+      '<div class="bmi-value">' + bmiRound + '</div>' +
+      '<div class="bmi-category">' + cat.label + '</div>' +
+      '<div class="bmi-note">' +
+      'BMI is a general screening measure and is <strong>not a medical diagnosis</strong>. ' +
+      'It does not account for muscle mass, bone density, age, or sex. ' +
+      'Always consult a healthcare professional for a full health assessment.' +
+      '</div>';
     resultDiv.classList.remove("hidden");
   }
 
   function getBmiCategory(bmi) {
-    if (bmi < 18.5) return { category: "Underweight",   cssClass: "bmi-underweight" };
-    if (bmi < 25.0) return { category: "Normal range",  cssClass: "bmi-normal" };
-    if (bmi < 30.0) return { category: "Overweight",    cssClass: "bmi-overweight" };
-    return             { category: "Obesity",           cssClass: "bmi-obesity" };
+    if (bmi < 18.5) return { label: "Underweight",  cssClass: "bmi-underweight" };
+    if (bmi < 25.0) return { label: "Normal range", cssClass: "bmi-normal" };
+    if (bmi < 30.0) return { label: "Overweight",   cssClass: "bmi-overweight" };
+    return               { label: "Obesity",        cssClass: "bmi-obesity" };
   }
 
   function showBmiError(msg) {
     resultDiv.className = "bmi-result";
-    resultDiv.innerHTML = `<div class="bmi-note" style="color:var(--color-red)">${msg}</div>`;
+    resultDiv.innerHTML = '<div class="bmi-note" style="color:var(--color-red)">' + msg + '</div>';
     resultDiv.classList.remove("hidden");
   }
 
@@ -76,8 +171,6 @@
   }
 
   calcBtn.addEventListener("click", computeBmi);
-
-  // Allow Enter key in height/weight fields to trigger calculation
   [heightInput, weightInput].forEach(function(el) {
     el.addEventListener("keydown", function(e) {
       if (e.key === "Enter") { e.preventDefault(); computeBmi(); }
@@ -91,17 +184,16 @@
    ===================================================================== */
 
 (function initFormValidation() {
-  const form      = document.getElementById("nutrition-form");
-  const submitBtn = document.getElementById("submit-btn");
-  const overlay   = document.getElementById("loading-overlay");
+  var form      = document.getElementById("nutrition-form");
+  var submitBtn = document.getElementById("submit-btn");
+  var overlay   = document.getElementById("loading-overlay");
 
   if (!form) return;
 
-  // ── Validation rules ──
-  const rules = [
+  // ── Field rules ──
+  var rules = [
     {
-      id: "name",
-      errorId: "name-error",
+      id: "name", errorId: "name-error",
       validate: function(v) {
         if (!v.trim()) return "Name is required.";
         if (v.trim().length < 2) return "Name must be at least 2 characters.";
@@ -109,61 +201,52 @@
       }
     },
     {
-      id: "age",
-      errorId: "age-error",
+      id: "age", errorId: "age-error",
       validate: function(v) {
         if (!v.trim()) return "Age is required.";
-        const n = Number(v);
+        var n = Number(v);
         if (!Number.isInteger(n) || n < 1 || n > 120) return "Age must be a whole number between 1 and 120.";
         return null;
       }
     },
     {
-      id: "gender",
-      errorId: "gender-error",
-      validate: function(v) {
-        if (!v) return "Please select a gender.";
-        return null;
-      }
+      id: "gender", errorId: "gender-error",
+      validate: function(v) { return v ? null : "Please select a gender."; }
     },
     {
-      id: "height",
-      errorId: "height-error",
+      id: "height", errorId: "height-error",
       validate: function(v) {
         if (!v.trim()) return "Height is required.";
-        const n = parseFloat(v);
+        var n = parseFloat(v);
         if (isNaN(n) || n < 50 || n > 300) return "Height must be between 50 and 300 cm.";
         return null;
       }
     },
     {
-      id: "weight",
-      errorId: "weight-error",
+      id: "weight", errorId: "weight-error",
       validate: function(v) {
         if (!v.trim()) return "Weight is required.";
-        const n = parseFloat(v);
+        var n = parseFloat(v);
         if (isNaN(n) || n < 10 || n > 500) return "Weight must be between 10 and 500 kg.";
         return null;
       }
     }
   ];
 
-  // Radio group validations (not tied to a single input id)
-  const radioRules = [
-    { name: "activity_level", errorId: "activity_level-error", label: "Activity level" },
-    { name: "fitness_goal",   errorId: "fitness_goal-error",   label: "Fitness goal" },
-    { name: "food_preference",errorId: "food_preference-error",label: "Food preference" }
+  // ── Radio group rules ──
+  var radioRules = [
+    { name: "activity_level",  errorId: "activity_level-error",  label: "activity level" },
+    { name: "fitness_goal",    errorId: "fitness_goal-error",    label: "fitness goal" },
+    { name: "food_preference", errorId: "food_preference-error", label: "food preference" }
   ];
 
-  // ── Helper: set/clear error ──
   function setError(errorId, msg) {
-    const el = document.getElementById(errorId);
-    if (!el) return;
-    el.textContent = msg || "";
+    var el = document.getElementById(errorId);
+    if (el) el.textContent = msg || "";
   }
 
   function markField(id, hasError) {
-    const el = document.getElementById(id);
+    var el = document.getElementById(id);
     if (!el) return;
     if (hasError) {
       el.classList.add("invalid");
@@ -175,29 +258,25 @@
   }
 
   function getRadioValue(name) {
-    const checked = form.querySelector(`input[name="${name}"]:checked`);
+    var checked = form.querySelector('input[name="' + name + '"]:checked');
     return checked ? checked.value : "";
   }
 
-  // ── Validate all fields, return true if form is valid ──
   function validateAll() {
-    let valid = true;
+    var valid = true;
 
-    // Text/number inputs
     rules.forEach(function(rule) {
-      const el  = document.getElementById(rule.id);
-      const val = el ? el.value : "";
-      const err = rule.validate(val);
+      var el  = document.getElementById(rule.id);
+      var val = el ? el.value : "";
+      var err = rule.validate(val);
       setError(rule.errorId, err || "");
       markField(rule.id, !!err);
       if (err) valid = false;
     });
 
-    // Radio groups
     radioRules.forEach(function(rule) {
-      const val = getRadioValue(rule.name);
-      if (!val) {
-        setError(rule.errorId, `Please select your ${rule.label.toLowerCase()}.`);
+      if (!getRadioValue(rule.name)) {
+        setError(rule.errorId, "Please select your " + rule.label + ".");
         valid = false;
       } else {
         setError(rule.errorId, "");
@@ -207,50 +286,40 @@
     return valid;
   }
 
-  // ── Live validation on blur ──
+  // ── Live blur validation ──
   rules.forEach(function(rule) {
-    const el = document.getElementById(rule.id);
+    var el = document.getElementById(rule.id);
     if (!el) return;
     el.addEventListener("blur", function() {
-      const err = rule.validate(el.value);
+      var err = rule.validate(el.value);
       setError(rule.errorId, err || "");
       markField(rule.id, !!err);
     });
     el.addEventListener("input", function() {
-      // Clear error on input so the user isn't pestered mid-typing
       if (el.classList.contains("invalid")) {
-        const err = rule.validate(el.value);
-        if (!err) {
-          setError(rule.errorId, "");
-          markField(rule.id, false);
-        }
+        var err = rule.validate(el.value);
+        if (!err) { setError(rule.errorId, ""); markField(rule.id, false); }
       }
     });
   });
 
-  // ── Form submit ──
+  // ── Submit ──
   form.addEventListener("submit", function(e) {
     e.preventDefault();
-
-    const valid = validateAll();
-    if (!valid) {
-      // Scroll to first error
-      const firstError = form.querySelector(".error-msg:not(:empty)");
+    if (!validateAll()) {
+      var firstError = form.querySelector(".error-msg:not(:empty)");
       if (firstError) {
-        const parent = firstError.closest(".card") || firstError;
+        var parent = firstError.closest(".card") || firstError;
         parent.scrollIntoView({ behavior: "smooth", block: "start" });
       }
       return;
     }
 
-    // Disable button + show overlay
     submitBtn.disabled = true;
     submitBtn.setAttribute("aria-disabled", "true");
-    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Generating…';
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Analysing your profile…';
 
     if (overlay) overlay.classList.remove("hidden");
-
-    // Native submit (lets Flask handle the POST)
     form.submit();
   });
 })();
@@ -258,7 +327,6 @@
 
 /* =====================================================================
    OPTION CARD KEYBOARD ACCESSIBILITY
-   Allow Space/Enter to select an option-card radio via keyboard
    ===================================================================== */
 
 (function initOptionCardKeyboard() {
@@ -266,21 +334,21 @@
     card.addEventListener("keydown", function(e) {
       if (e.key === " " || e.key === "Enter") {
         e.preventDefault();
-        const radio = card.querySelector('input[type="radio"]');
+        var radio = card.querySelector('input[type="radio"]');
         if (radio) { radio.checked = true; radio.dispatchEvent(new Event("change")); }
       }
     });
-    // Make the label keyboard-focusable if it contains a radio
-    const radio = card.querySelector('input[type="radio"]');
-    if (radio) {
-      // The hidden radio itself receives focus; reflect it on the outer card
+
+    var radio   = card.querySelector('input[type="radio"]');
+    var content = card.querySelector(".option-content");
+    if (radio && content) {
       radio.addEventListener("focus", function() {
-        card.querySelector(".option-content").style.outline = "2px solid var(--color-accent)";
-        card.querySelector(".option-content").style.outlineOffset = "2px";
+        content.style.outline = "2px solid var(--color-teal)";
+        content.style.outlineOffset = "2px";
       });
       radio.addEventListener("blur", function() {
-        card.querySelector(".option-content").style.outline = "";
-        card.querySelector(".option-content").style.outlineOffset = "";
+        content.style.outline = "";
+        content.style.outlineOffset = "";
       });
     }
   });
@@ -288,14 +356,14 @@
 
 
 /* =====================================================================
-   AUTO-SYNC BMI FIELDS  from the main form height/weight inputs
+   AUTO-SYNC BMI FIELDS from main form height/weight
    ===================================================================== */
 
 (function syncBmiFromForm() {
-  const formHeight = document.getElementById("height");
-  const formWeight = document.getElementById("weight");
-  const bmiHeight  = document.getElementById("bmi-height");
-  const bmiWeight  = document.getElementById("bmi-weight");
+  var formHeight = document.getElementById("height");
+  var formWeight = document.getElementById("weight");
+  var bmiHeight  = document.getElementById("bmi-height");
+  var bmiWeight  = document.getElementById("bmi-weight");
 
   if (!formHeight || !bmiHeight) return;
 

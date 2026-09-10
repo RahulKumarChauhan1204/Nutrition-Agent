@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NutriAI — Personal Nutrition Assistant</title>
+  <title>HealthCare — Personal Nutrition &amp; Health Assistant</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
         integrity="sha512-Avb2QiuDEEvB4bZJYdft2mNjVShBftLdPG8FJ0V7irTLQ8Uo0qcPxh4Plh7eecyn6CflLstUkEbRlCg3UF8A=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <meta name="description" content="NutriAI – AI-powered personal nutrition planning tool." />
+  <meta name="description" content="HealthCare — AI-powered personal nutrition and health planning." />
 </head>
 <body>
 
@@ -16,35 +16,78 @@
 <header class="site-header">
   <div class="container header-inner">
     <div class="logo">
-      <i class="fa-solid fa-seedling" aria-hidden="true"></i>
-      <span>NutriAI</span>
+      <i class="fa-solid fa-heart-pulse" aria-hidden="true"></i>
+      <span>HealthCare</span>
     </div>
-    <p class="header-tagline">Your Personal Nutrition Assistant</p>
+    <nav class="header-nav" aria-label="Site navigation">
+      <a href="#bmi-section">BMI Check</a>
+      <a href="#health-check-section">Health Check</a>
+      <a href="#form-top">Nutrition Plan</a>
+    </nav>
   </div>
 </header>
 
 <!-- ===================== HERO ===================== -->
 <section class="hero">
   <div class="container hero-inner">
-    <h1 class="hero-title">Build a Nutrition Plan Based on Your Goals</h1>
-    <p class="hero-sub">Answer a few questions and our AI will create a personalised nutrition
-      plan tailored to your lifestyle, preferences, and goals.</p>
-    <div class="hero-badges">
-      <span class="badge"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Privacy-first</span>
-      <span class="badge"><i class="fa-solid fa-bolt" aria-hidden="true"></i> AI-powered</span>
-      <span class="badge"><i class="fa-solid fa-leaf" aria-hidden="true"></i> Personalised</span>
+    <div class="hero-text">
+      <div class="hero-eyebrow">
+        <i class="fa-solid fa-stethoscope" aria-hidden="true"></i> AI-Powered Health &amp; Nutrition
+      </div>
+      <h1 class="hero-title">Your Personal<br /><span class="hero-accent">HealthCare</span> Assistant</h1>
+      <p class="hero-sub">
+        Get a personalised nutrition plan, BMI assessment, and health check — all tailored
+        to your goals, lifestyle, and dietary preferences.
+      </p>
+      <div class="hero-badges">
+        <span class="badge badge-green"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Privacy-first</span>
+        <span class="badge badge-blue"><i class="fa-solid fa-bolt" aria-hidden="true"></i> AI-powered</span>
+        <span class="badge badge-teal"><i class="fa-solid fa-heart-pulse" aria-hidden="true"></i> Health-aware</span>
+        <span class="badge badge-purple"><i class="fa-solid fa-leaf" aria-hidden="true"></i> Personalised</span>
+      </div>
+    </div>
+    <div class="hero-illustration" aria-hidden="true">
+      <div class="hero-icon-ring">
+        <i class="fa-solid fa-heart-pulse"></i>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- ===================== MAIN CONTENT ===================== -->
-<main class="container main-content">
+<!-- ===================== FEATURE STRIP ===================== -->
+<div class="feature-strip">
+  <div class="container feature-strip-inner">
+    <div class="feature-item">
+      <i class="fa-solid fa-weight-scale" aria-hidden="true"></i>
+      <span>BMI Calculator</span>
+    </div>
+    <div class="feature-sep" aria-hidden="true"></div>
+    <div class="feature-item">
+      <i class="fa-solid fa-stethoscope" aria-hidden="true"></i>
+      <span>Health Risk Check</span>
+    </div>
+    <div class="feature-sep" aria-hidden="true"></div>
+    <div class="feature-item">
+      <i class="fa-solid fa-utensils" aria-hidden="true"></i>
+      <span>Nutrition Plan</span>
+    </div>
+    <div class="feature-sep" aria-hidden="true"></div>
+    <div class="feature-item">
+      <i class="fa-solid fa-calendar-week" aria-hidden="true"></i>
+      <span>7-Day Meal Plan</span>
+    </div>
+  </div>
+</div>
 
-  <!-- BMI Calculator Card -->
-  <section class="card bmi-card" aria-labelledby="bmi-heading">
+<!-- ===================== MAIN ===================== -->
+<main class="container main-content" id="form-top">
+
+  <!-- ─── BMI Calculator ─── -->
+  <section class="card bmi-card" id="bmi-section" aria-labelledby="bmi-heading">
     <div class="card-header">
-      <i class="fa-solid fa-calculator" aria-hidden="true"></i>
+      <i class="fa-solid fa-weight-scale" aria-hidden="true"></i>
       <h2 id="bmi-heading">Quick BMI Calculator</h2>
+      <span class="card-badge">Instant · No AI needed</span>
     </div>
     <div class="card-body">
       <p class="info-text">
@@ -63,16 +106,64 @@
           <input type="number" id="bmi-weight" placeholder="e.g. 70" min="10" max="500"
                  aria-label="Weight in kilograms for BMI calculation" />
         </div>
-        <button type="button" id="calc-bmi-btn" class="btn btn-secondary">
-          <i class="fa-solid fa-calculator" aria-hidden="true"></i> Calculate BMI
+        <button type="button" id="calc-bmi-btn" class="btn btn-teal">
+          <i class="fa-solid fa-calculator" aria-hidden="true"></i> Calculate
         </button>
       </div>
       <div id="bmi-result" class="bmi-result hidden" aria-live="polite"></div>
     </div>
   </section>
 
-  <!-- Nutrition Plan Form -->
+  <!-- ─── Health Check Section ─── -->
+  <section class="card health-check-card" id="health-check-section" aria-labelledby="hc-heading">
+    <div class="card-header card-header-teal">
+      <i class="fa-solid fa-stethoscope" aria-hidden="true"></i>
+      <h2 id="hc-heading">Health Check</h2>
+      <span class="card-badge card-badge-teal">Helps personalise your plan</span>
+    </div>
+    <div class="card-body">
+      <p class="info-text info-text-teal">
+        <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+        Providing health information helps the AI tailor general dietary guidance.
+        <strong>This is not a medical assessment.</strong>
+        If you have any medical concerns, consult a qualified healthcare professional.
+      </p>
+      <div class="form-grid" id="health-check-form-fields">
+        <div class="form-group">
+          <label for="health-condition-display">Do you have a known health condition?</label>
+          <select id="health-condition-display" aria-label="Known health condition">
+            <option value="None">None / Not sure</option>
+            <option value="Diabetes (Type 1)">Diabetes (Type 1)</option>
+            <option value="Diabetes (Type 2)">Diabetes (Type 2)</option>
+            <option value="Hypertension">Hypertension (High Blood Pressure)</option>
+            <option value="High Cholesterol">High Cholesterol</option>
+            <option value="PCOS/PCOD">PCOS / PCOD</option>
+            <option value="Thyroid disorder">Thyroid Disorder</option>
+            <option value="Heart disease">Heart Disease</option>
+            <option value="Kidney disease">Kidney Disease</option>
+            <option value="Liver disease">Liver Disease</option>
+            <option value="Anaemia">Anaemia</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="symptoms-display">Any symptoms you are experiencing?</label>
+          <input type="text" id="symptoms-display"
+                 placeholder="e.g. fatigue, bloating, frequent thirst (comma-separated)"
+                 maxlength="400" />
+          <small class="field-hint">Separate multiple symptoms with commas.</small>
+        </div>
+      </div>
+      <div id="health-check-preview" class="health-check-preview hidden" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- ─── Nutrition Plan Form ─── -->
   <form id="nutrition-form" method="POST" action="/generate-plan" novalidate>
+
+    <!-- Hidden fields synced from the health-check section above -->
+    <input type="hidden" id="health_condition" name="health_condition" value="None" />
+    <input type="hidden" id="symptoms" name="symptoms" value="" />
 
     <!-- Personal Information -->
     <section class="card" aria-labelledby="personal-heading">
@@ -146,7 +237,7 @@
         <h2 id="activity-heading">Activity Level</h2>
       </div>
       <div class="card-body">
-        <div class="option-cards" id="activity-options" role="radiogroup" aria-labelledby="activity-heading">
+        <div class="option-cards" role="radiogroup" aria-labelledby="activity-heading">
 
           <label class="option-card">
             <input type="radio" name="activity_level" value="Sedentary" />
@@ -162,7 +253,7 @@
             <div class="option-content">
               <i class="fa-solid fa-person-walking" aria-hidden="true"></i>
               <strong>Lightly Active</strong>
-              <small>Light exercise 1–3 days/week</small>
+              <small>1–3 days/week</small>
             </div>
           </label>
 
@@ -171,7 +262,7 @@
             <div class="option-content">
               <i class="fa-solid fa-bicycle" aria-hidden="true"></i>
               <strong>Moderately Active</strong>
-              <small>Moderate exercise 3–5 days/week</small>
+              <small>3–5 days/week</small>
             </div>
           </label>
 
@@ -180,7 +271,7 @@
             <div class="option-content">
               <i class="fa-solid fa-dumbbell" aria-hidden="true"></i>
               <strong>Very Active</strong>
-              <small>Hard exercise 6–7 days/week</small>
+              <small>6–7 days/week</small>
             </div>
           </label>
 
@@ -189,7 +280,7 @@
             <div class="option-content">
               <i class="fa-solid fa-fire-flame-curved" aria-hidden="true"></i>
               <strong>Extremely Active</strong>
-              <small>Very hard exercise or physical job</small>
+              <small>Physical job or athlete</small>
             </div>
           </label>
 
@@ -205,7 +296,7 @@
         <h2 id="goal-heading">Fitness Goal</h2>
       </div>
       <div class="card-body">
-        <div class="option-cards" id="goal-options" role="radiogroup" aria-labelledby="goal-heading">
+        <div class="option-cards" role="radiogroup" aria-labelledby="goal-heading">
 
           <label class="option-card">
             <input type="radio" name="fitness_goal" value="Weight Loss" />
@@ -220,7 +311,7 @@
             <input type="radio" name="fitness_goal" value="Weight Maintenance" />
             <div class="option-content">
               <i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>
-              <strong>Weight Maintenance</strong>
+              <strong>Maintenance</strong>
               <small>Stay at current weight</small>
             </div>
           </label>
@@ -230,7 +321,7 @@
             <div class="option-content">
               <i class="fa-solid fa-dumbbell" aria-hidden="true"></i>
               <strong>Muscle Gain</strong>
-              <small>Build lean muscle mass</small>
+              <small>Build lean muscle</small>
             </div>
           </label>
 
@@ -239,7 +330,7 @@
             <div class="option-content">
               <i class="fa-solid fa-heart" aria-hidden="true"></i>
               <strong>Healthy Eating</strong>
-              <small>Balanced, nutritious diet</small>
+              <small>Balanced nutrition</small>
             </div>
           </label>
 
@@ -255,7 +346,7 @@
         <h2 id="food-pref-heading">Food Preference</h2>
       </div>
       <div class="card-body">
-        <div class="option-cards" id="food-options" role="radiogroup" aria-labelledby="food-pref-heading">
+        <div class="option-cards" role="radiogroup" aria-labelledby="food-pref-heading">
 
           <label class="option-card">
             <input type="radio" name="food_preference" value="Vegetarian" />
@@ -350,10 +441,12 @@
           <div class="form-group full-width">
             <label for="additional_notes">Additional Notes</label>
             <textarea id="additional_notes" name="additional_notes" rows="3"
-                      placeholder="Any medical conditions, medications, or other relevant information…"
+                      placeholder="Any medications, supplements, or other relevant information…"
                       maxlength="500"></textarea>
-            <small class="field-hint">If you have a medical condition or take medication,
-              please consult a healthcare professional — the AI cannot provide medical advice.</small>
+            <small class="field-hint">
+              <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+              If you take medication or have a medical condition, always consult a healthcare professional.
+            </small>
           </div>
 
         </div>
@@ -364,11 +457,11 @@
     <div class="submit-section">
       <button type="submit" id="submit-btn" class="btn btn-primary btn-large">
         <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
-        Generate My Nutrition Plan
+        Generate My Health &amp; Nutrition Plan
       </button>
     </div>
 
-  </form><!-- /nutrition-form -->
+  </form>
 
 </main>
 
@@ -376,8 +469,8 @@
 <div id="loading-overlay" class="loading-overlay hidden" role="status" aria-live="assertive">
   <div class="loading-box">
     <div class="spinner" aria-hidden="true"></div>
-    <h3>Creating your personalised nutrition plan…</h3>
-    <p>This usually takes 10–20 seconds.</p>
+    <h3>Analysing your health profile…</h3>
+    <p>Creating your personalised nutrition plan. This usually takes 10–20 seconds.</p>
   </div>
 </div>
 
@@ -386,11 +479,11 @@
   <div class="container footer-inner">
     <p class="disclaimer-footer">
       <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
-      <strong>Disclaimer:</strong> NutriAI provides general nutrition education only.
-      It is <strong>not a substitute</strong> for professional medical or dietary advice.
+      <strong>Medical Disclaimer:</strong> HealthCare provides general nutrition and health education only.
+      It is <strong>not a substitute</strong> for professional medical advice, diagnosis, or treatment.
       Always consult a qualified healthcare professional before making significant dietary changes.
     </p>
-    <p class="footer-copy">&copy; 2025 NutriAI</p>
+    <p class="footer-copy">&copy; 2025 HealthCare &mdash; For educational purposes only</p>
   </div>
 </footer>
 

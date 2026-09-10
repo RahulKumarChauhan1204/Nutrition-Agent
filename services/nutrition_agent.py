@@ -1,5 +1,5 @@
 """
-Nutrition Agent Service
+HealthCare — Nutrition Agent Service
 Handles all interactions with the Groq API to generate personalised nutrition plans.
 """
 
@@ -12,7 +12,7 @@ from groq import Groq, APIConnectionError, APIStatusError, RateLimitError
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# Groq client – initialised lazily so import-time errors are surfaced clearly
+# Groq client
 # ---------------------------------------------------------------------------
 
 def _get_client() -> Groq:
@@ -31,7 +31,6 @@ GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 # ---------------------------------------------------------------------------
 
 def calculate_bmi(height_cm: float, weight_kg: float) -> dict:
-    """Return BMI value, category, and an age-appropriate note."""
     height_m = height_cm / 100.0
     bmi = round(weight_kg / (height_m ** 2), 1)
     return {"bmi": bmi, "category": _bmi_category(bmi)}
@@ -52,8 +51,8 @@ def _bmi_category(bmi: float) -> str:
 # System prompt
 # ---------------------------------------------------------------------------
 
-SYSTEM_PROMPT = """You are NutriAI, a knowledgeable and empathetic nutrition education assistant.
-Your role is to provide general nutrition guidance and education — you are NOT a doctor, dietitian,
+SYSTEM_PROMPT = """You are HealthCare AI, a knowledgeable and empathetic nutrition and health education assistant.
+Your role is to provide general nutrition guidance and health education — you are NOT a doctor, dietitian,
 or medical professional. Always remind users to consult a qualified healthcare provider for personal
 medical advice, diagnosis, or treatment.
 
@@ -71,6 +70,8 @@ Guidelines you MUST follow:
     consulting a qualified healthcare professional instead of attempting to address it yourself.
 11. Keep language simple, encouraging, and non-judgmental.
 12. For budget-conscious users, prioritise low-cost whole foods.
+13. When a health condition is present (e.g. diabetes, hypertension), include brief general dietary
+    principles for that condition, and clearly label them as general educational information only.
 
 Output format:
 Return ONLY a valid JSON object — no markdown fences, no extra commentary outside the JSON.
@@ -84,6 +85,7 @@ Use exactly this structure:
     "carbs": "grams/day range and example sources",
     "fats": "grams/day range and example sources"
   },
+  "health_notes": "Brief general dietary notes related to any stated health condition (or empty string if none)",
   "meal_plan": [
     {"meal": "Breakfast", "foods": ["item1", "item2"]},
     {"meal": "Mid-Morning Snack", "foods": ["item1"]},
@@ -116,7 +118,7 @@ The seven_day_plan array must contain exactly 7 objects (Day 1 through Day 7).
 
 def _build_user_prompt(data: dict) -> str:
     lines = [
-        "Please generate a personalised nutrition plan for the following individual:",
+        "Please generate a personalised nutrition and health plan for the following individual:",
         "",
         f"Name: {data.get('name', 'User')}",
         f"Age: {data.get('age')} years",
@@ -129,13 +131,19 @@ def _build_user_prompt(data: dict) -> str:
         f"Food Preference: {data.get('food_preference')}",
     ]
 
+    if data.get("health_condition") and data["health_condition"] not in ("", "None"):
+        lines.append(f"Health Condition: {data['health_condition']}")
+
+    if data.get("symptoms"):
+        lines.append(f"Reported Symptoms: {data['symptoms']}")
+
     optional_fields = [
-        ("allergies", "Allergies / Intolerances"),
-        ("disliked_foods", "Foods to Avoid"),
-        ("meals_per_day", "Meals per Day"),
+        ("allergies",          "Allergies / Intolerances"),
+        ("disliked_foods",     "Foods to Avoid"),
+        ("meals_per_day",      "Meals per Day"),
         ("cuisine_preference", "Cuisine Preference"),
-        ("budget_preference", "Budget Preference"),
-        ("additional_notes", "Additional Notes"),
+        ("budget_preference",  "Budget Preference"),
+        ("additional_notes",   "Additional Notes"),
     ]
     for key, label in optional_fields:
         value = data.get(key, "").strip() if data.get(key) else ""
@@ -148,6 +156,7 @@ def _build_user_prompt(data: dict) -> str:
         "- Respect the stated food preference strictly.",
         "- Do NOT include any foods the user is allergic to.",
         "- Do NOT include disliked foods.",
+        "- If a health condition is present, add relevant general dietary education in the health_notes field.",
         "- Provide a 7-day example meal plan.",
         "- Return valid JSON only.",
     ]
@@ -159,17 +168,13 @@ def _build_user_prompt(data: dict) -> str:
 # ---------------------------------------------------------------------------
 
 def _parse_response(raw: str) -> dict:
-    """Try to extract a JSON object from the model's response."""
-    # Strip markdown fences if present
     cleaned = re.sub(r"```(?:json)?", "", raw).strip().rstrip("`").strip()
 
-    # Attempt direct parse
     try:
         return json.loads(cleaned)
     except json.JSONDecodeError:
         pass
 
-    # Try to find the outermost { ... } block
     match = re.search(r"\{.*\}", cleaned, re.DOTALL)
     if match:
         try:
@@ -177,18 +182,18 @@ def _parse_response(raw: str) -> dict:
         except json.JSONDecodeError:
             pass
 
-    # Fallback: wrap raw text so the UI can still render something
     logger.warning("Could not parse JSON from model response; using fallback.")
     return {
-        "summary": raw[:500] if len(raw) > 500 else raw,
-        "calorie_guidance": "Please see the summary above.",
-        "macros": {"protein": "N/A", "carbs": "N/A", "fats": "N/A"},
-        "meal_plan": [],
-        "seven_day_plan": [],
-        "hydration": "Aim for 8–10 glasses of water per day.",
+        "summary":            raw[:500] if len(raw) > 500 else raw,
+        "calorie_guidance":   "Please see the summary above.",
+        "macros":             {"protein": "N/A", "carbs": "N/A", "fats": "N/A"},
+        "health_notes":       "",
+        "meal_plan":          [],
+        "seven_day_plan":     [],
+        "hydration":          "Aim for 8–10 glasses of water per day.",
         "foods_to_prioritize": [],
-        "foods_to_limit": [],
-        "tips": ["Please consult a registered dietitian for personalised guidance."],
+        "foods_to_limit":     [],
+        "tips":               ["Please consult a registered dietitian for personalised guidance."],
         "disclaimer": (
             "This information is for general education only and is not a substitute "
             "for professional medical or dietary advice."
@@ -205,7 +210,7 @@ def generate_nutrition_plan(user_data: dict) -> dict:
     Send user data to Groq and return a parsed nutrition plan dict.
     Raises NutritionAgentError on failure.
     """
-    client = _get_client()
+    client      = _get_client()
     user_prompt = _build_user_prompt(user_data)
 
     try:
@@ -213,7 +218,7 @@ def generate_nutrition_plan(user_data: dict) -> dict:
             model=GROQ_MODEL,
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": user_prompt},
+                {"role": "user",   "content": user_prompt},
             ],
             temperature=0.6,
             max_tokens=4096,
